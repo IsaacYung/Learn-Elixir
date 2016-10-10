@@ -7,9 +7,10 @@ defmodule Alpha.Supervisor do
 
   def init(:ok) do
     children = [
-      worker(Alpha.Registry, [Alpha.Registry])
+      worker(Alpha.Registry, [Alpha.Registry]),
+      supervisor(Alpha.Bucket.Supervisor, [])
     ]
 
-    supervise(children, strategy: :one_for_one)
+    supervise(children, strategy: :rest_for_one)
   end
 end

@@ -22,4 +22,17 @@ defmodule Alpha.RegistryTest do
     Agent.stop(bucket)
     assert Alpha.Registry.lookup(registry, "shopping") == :error
   end
+
+  test "removes bucket on crash", %{registry: registry} do
+    Alpha.Registry.create(registry, "shopping")
+    {:ok, bucket} = Alpha.Registry.lookup(registry, "shopping")
+
+    #Stop the bucket with non-normal reason
+    Process.exit(bucket, :shutdown)
+
+    ref = Process.monitor(bucket)
+    assert_receive {:DOWN, ^ref, _, _, _}
+
+    assert Alpha.Registry.lookup(registry, "shopping") == :error
+  end
 end

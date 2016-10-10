@@ -42,7 +42,7 @@ defmodule Alpha.Registry do
     if Map.has_key?(names, name) do
       {:noreply, {names, refs}}
     else
-      {:ok, pid} = Alpha.Bucket.start_link
+      {:ok, pid} = Alpha.Bucket.Supervisor.start_bucket
       ref = Process.monitor(pid)
       refs = Map.put(refs, ref, name)
       names = Map.put(names, name, pid)
