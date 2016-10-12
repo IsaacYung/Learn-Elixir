@@ -2,8 +2,8 @@ defmodule Alpha.RegistryTest do
   use ExUnit.Case, async: true
 
   setup context do
-    {:ok, registry} = Alpha.Registry.start_link(context.test)
-    {:ok, registry: registry}
+    {:ok, _} = Alpha.Registry.start_link(context.test)
+    {:ok, registry: context.test}
   end
 
   test "spawns buckets", %{registry: registry} do
@@ -20,6 +20,9 @@ defmodule Alpha.RegistryTest do
     Alpha.Registry.create(registry, "shopping")
     {:ok, bucket} = Alpha.Registry.lookup(registry, "shopping")
     Agent.stop(bucket)
+
+    # Do a call to ensure the registry oricessed the DOWN message
+    _ = Alpha.Registry.create(registry, "bogus")
     assert Alpha.Registry.lookup(registry, "shopping") == :error
   end
 
@@ -27,12 +30,15 @@ defmodule Alpha.RegistryTest do
     Alpha.Registry.create(registry, "shopping")
     {:ok, bucket} = Alpha.Registry.lookup(registry, "shopping")
 
-    #Stop the bucket with non-normal reason
+    # Kill the bucket and wait for the notification
     Process.exit(bucket, :shutdown)
 
+    # Wait until the bucket is dead
     ref = Process.monitor(bucket)
     assert_receive {:DOWN, ^ref, _, _, _}
 
+    # Do a call to ensure the registry processed the DOWN message
+    _ = Alpha.Registry.create(registry, "bogus")
     assert Alpha.Registry.lookup(registry, "shopping") == :error
   end
 end
