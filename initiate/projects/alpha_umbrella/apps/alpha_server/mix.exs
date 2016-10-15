@@ -18,7 +18,7 @@ defmodule AlphaServer.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger],
+    [applications: [:logger, :alpha],
      mod: {AlphaServer, []}]
   end
 
@@ -36,6 +36,6 @@ defmodule AlphaServer.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    []
+    [{:alpha, in_umbrella: true}]
   end
 end

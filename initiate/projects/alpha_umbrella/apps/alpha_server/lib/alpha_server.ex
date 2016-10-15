@@ -23,20 +23,36 @@ defmodule AlphaServer do
   end
 
   defp serve(socket) do
-    socket
-    |> read_line()
-    |> write_line(socket)
+    msg =
+      with {:ok, data} <- read_line(socket),
+           {:ok, command} <- AlphaServer.Command.parse(data),
+           do: AlphaServer.Command.run(command)
 
+    write_line(socket, msg)
     serve(socket)
   end
 
   defp read_line(socket) do
-    {:ok, data} = :gen_tcp.recv(socket, 0)
-    data
+    :gen_tcp.recv(socket, 0)
   end
 
-  defp write_line(line, socket) do
-    :gen_tcp.send(socket, line)
+  defp write_line(socket, {:ok, text}) do
+    :gen_tcp.send(socket, text)
+  end
+
+  defp write_line(socket, {:error, :unknown_command}) do
+    # Known error. Write to the client
+    :gen_tcp.send(socket, "UNKNOWN COMMAND\r\n")
+  end
+
+  defp write_line(socket, {:error, error}) do
+    # Known error. Write to the client
+    :gen_tcp.send(socket, "ERROR\r\n")
+    exit(error)
+  end
+
+  defp write_line(socket, {:error, :not_found}) do
+    :gen_tcp.send(socket, "NOT FOUND\r\n")
   end
 
   def start(_type, _args) do
@@ -46,8 +62,6 @@ defmodule AlphaServer do
       supervisor(Task.Supervisor, [[name: AlphaServer.TaskSupervisor]]),
       worker(Task, [AlphaServer, :accept, [4040]])
     ]
-
-    :observer.start
 
     opts = [strategy: :one_for_one, name: AlphaServer.Supervisor]
     Supervisor.start_link(children, opts)
