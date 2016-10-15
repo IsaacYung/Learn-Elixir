@@ -21,6 +21,6 @@ defmodule AlphaUmbrella.Mixfile do
   # Dependencies listed here are available only for this project
   # and cannot be accessed from applications inside the apps folder
   defp deps do
-    [{:alpha, in_umbrella: true}]
+    []
   end
 end
